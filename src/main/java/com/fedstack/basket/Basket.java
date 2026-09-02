@@ -13,7 +13,7 @@ public class Basket {
     }
 
     public void addProduct(Product product) {
-        addProduct(product, 1);
+        items.add(new BasketItem(product));
     }
 
     public void addProduct(Product product, int quantity) {

@@ -24,7 +24,7 @@ class BasketTest {
     }
 
     @Test
-    void overloadedAddProductMethodsBothWork() {
+    void addProductSupportsDefaultAndExplicitQuantities() {
         Product mug = new Product("MUG-001", "Mug", new BigDecimal("12.50"));
         Basket basket = new Basket();
 

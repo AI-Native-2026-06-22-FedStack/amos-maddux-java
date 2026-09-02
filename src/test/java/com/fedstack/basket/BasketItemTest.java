@@ -8,6 +8,15 @@ import org.junit.jupiter.api.Test;
 
 class BasketItemTest {
     @Test
+    void defaultsQuantityToOne() {
+        Product mug = new Product("MUG-001", "Mug", new BigDecimal("12.50"));
+        BasketItem item = new BasketItem(mug);
+
+        assertEquals(1, item.getQuantity());
+        assertEquals(new BigDecimal("12.50"), item.getLineTotal());
+    }
+
+    @Test
     void computesLineTotal() {
         Product mug = new Product("MUG-001", "Mug", new BigDecimal("12.50"));
         BasketItem item = new BasketItem(mug, 2);

@@ -6,6 +6,10 @@ public class BasketItem {
     private final Product product;
     private final int quantity;
 
+    public BasketItem(Product product) {
+        this(product, 1);
+    }
+
     public BasketItem(Product product, int quantity) {
         if (product == null) {
             throw new IllegalArgumentException("Basket item product is required.");
