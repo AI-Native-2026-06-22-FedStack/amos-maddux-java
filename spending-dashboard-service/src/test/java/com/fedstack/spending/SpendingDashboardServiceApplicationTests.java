@@ -3,17 +3,20 @@ package com.fedstack.spending;
 import com.fedstack.spending.application.MonthlySummaryService;
 import com.fedstack.spending.application.MonthlyTransactionQueryService;
 import com.fedstack.spending.console.DashboardConsoleRunner;
+import com.fedstack.spending.support.PostgreSqlContainerSupport;
 import com.fedstack.spending.source.TransactionSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class SpendingDashboardServiceApplicationTests {
+@ActiveProfiles("test")
+class SpendingDashboardServiceApplicationTests extends PostgreSqlContainerSupport {
 	private final ApplicationContext context;
 	private final MonthlySummaryService summaryService;
 	private final MonthlyTransactionQueryService transactionQueryService;
