@@ -5,6 +5,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
 
 @Testcontainers
 public abstract class PostgreSqlContainerSupport {
@@ -13,7 +14,14 @@ public abstract class PostgreSqlContainerSupport {
 			.withDatabaseName("spending_dashboard")
 			.withUsername("spending")
 			.withPassword("spending")
-			.withInitScript("db/spending_dashboard_schema.sql");
+			.withCopyFileToContainer(
+					MountableFile.forClasspathResource("db/spending_dashboard_schema.sql"),
+					"/docker-entrypoint-initdb.d/01_spending_dashboard_schema.sql"
+			)
+			.withCopyFileToContainer(
+					MountableFile.forClasspathResource("db/spending_dashboard_seed.sql"),
+					"/docker-entrypoint-initdb.d/02_spending_dashboard_seed.sql"
+			);
 
 	@DynamicPropertySource
 	static void configurePostgreSqlProperties(DynamicPropertyRegistry registry) {
