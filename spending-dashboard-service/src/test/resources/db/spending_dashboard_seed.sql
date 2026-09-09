@@ -21,7 +21,7 @@
 
 BEGIN;
 
-TRUNCATE spending_insights, transactions, categories, merchants, accounts, users RESTART IDENTITY CASCADE;
+TRUNCATE spending_insights, transactions, user_auth_credentials, categories, merchants, accounts, users RESTART IDENTITY CASCADE;
 
 INSERT INTO users (id, email, display_name) VALUES
     (1, 'ada@example.com',  'Ada Lovelace'),

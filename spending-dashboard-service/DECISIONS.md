@@ -23,3 +23,19 @@ The use cases operate on a requested month, not an arbitrary date range. `YearMo
 ## Why constructor injection only?
 
 Each application service has one required collaborator: `TransactionSource`. Explicit constructors make those dependencies visible, easy to substitute in plain unit tests, and safe for Spring to wire without field injection, setter injection, or service lookup.
+
+## Why keep authentication separate from spending services?
+
+The Lesson 6 work establishes caller identity for future HTTP APIs without exposing spending data yet. New web, token, security, and credential-persistence code lives under `auth` and `security`, while the existing spending services still depend only on `TransactionSource`.
+
+## Why asymmetric JWTs with startup-generated keys?
+
+Access and refresh tokens are signed with an RSA key pair generated at application startup. That exercises asymmetric signing and verification without committing development private key material or implying a production key-rotation design.
+
+## Why store only the current refresh-token hash?
+
+Refresh tokens are bearer credentials, so the database stores only a SHA-256 digest of the current refresh JWT plus expiry/revocation state. A new sign-in replaces that digest, refresh renewal does not rotate it, and a stolen database row is not itself a reusable bearer token.
+
+## Why a protected caller endpoint?
+
+`GET /api/v1/auth/caller` is a narrow boundary test for Lesson 7. It returns only the verified JWT subject, creates no HTTP session, and does not expose dashboard, transaction, insight, or GraphQL behavior.

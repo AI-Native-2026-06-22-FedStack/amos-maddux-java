@@ -12,6 +12,7 @@ BEGIN;
 
 DROP TABLE IF EXISTS spending_insights CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS user_auth_credentials CASCADE;
 DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS merchants CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
@@ -35,6 +36,22 @@ CREATE TABLE accounts (
     CONSTRAINT fk_accounts_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT ck_accounts_type CHECK (account_type IN ('CHECKING', 'SAVINGS', 'CREDIT_CARD')),
     CONSTRAINT uq_accounts_user_name UNIQUE (user_id, name)
+);
+
+CREATE TABLE user_auth_credentials (
+    user_id                           BIGINT       PRIMARY KEY,
+    password_hash                     VARCHAR(100) NOT NULL,
+    current_refresh_token_hash        VARCHAR(64),
+    current_refresh_token_expires_at  TIMESTAMPTZ,
+    refresh_token_revoked_at          TIMESTAMPTZ,
+    created_at                        TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at                        TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    CONSTRAINT fk_user_auth_credentials_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT ck_user_auth_refresh_state CHECK (
+        (current_refresh_token_hash IS NULL AND current_refresh_token_expires_at IS NULL)
+        OR
+        (current_refresh_token_hash IS NOT NULL AND current_refresh_token_expires_at IS NOT NULL)
+    )
 );
 
 CREATE TABLE merchants (

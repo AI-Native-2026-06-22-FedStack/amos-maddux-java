@@ -786,9 +786,9 @@
             <button class="primary-button" type="submit">Sign in</button>
           </form>
           <div class="demo-box">
-            <strong>Demo credentials</strong><br />
+            <strong>Static prototype access</strong><br />
             Email: <span class="demo-value">demo@fedstack.dev</span><br />
-            Password: <span class="demo-value">password123</span>
+            Password: <span class="demo-value">any non-empty value</span>
           </div>
         </div>
       </div>
@@ -1103,7 +1103,7 @@
         event.preventDefault();
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
-        if (email === "demo@fedstack.dev" && password === "password123") {
+        if (email === "demo@fedstack.dev" && password.trim() !== "") {
           loginError.textContent = "";
           loginScreen.classList.add("hidden");
           dashboardScreen.classList.remove("hidden");
@@ -1113,7 +1113,7 @@
           window.scrollTo(0, 0);
         } else {
           loginError.textContent =
-            "Email or password is incorrect. Try the demo credentials below.";
+            "Use the prototype email and any non-empty password.";
         }
       });
 

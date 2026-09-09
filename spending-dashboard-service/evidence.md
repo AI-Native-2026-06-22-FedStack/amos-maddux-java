@@ -5,7 +5,7 @@
 Command run with Java 21:
 
 ```text
-JAVA_HOME=/tmp/codex-java21 GRADLE_USER_HOME=/tmp/codex-gradle-home PATH=/tmp/codex-java21/bin:$PATH ./gradlew test
+JAVA_HOME=/tmp/codex-java-tools/jdk-21.0.12.1+1 GRADLE_USER_HOME=/tmp/codex-gradle-home PATH=/tmp/codex-java-tools/jdk-21.0.12.1+1/bin:$PATH ./gradlew test
 ```
 
 Result:
@@ -19,8 +19,42 @@ Result:
 > Task :testClasses UP-TO-DATE
 > Task :test
 
-BUILD SUCCESSFUL in 10s
+BUILD SUCCESSFUL in 15s
 5 actionable tasks: 1 executed, 4 up-to-date
+```
+
+The test suite covers the existing spending domain/application/persistence tests plus the new HTTP authentication boundary tests.
+
+## Authentication Boundary Evidence
+
+`AuthenticationHttpTest` verifies the web application context, MockMvc security filters, Testcontainers PostgreSQL schema, and the authentication lifecycle through HTTP:
+
+- `POST /api/v1/auth/token` accepts runtime-generated synthetic credentials for seeded user id `1`.
+- the token response contains a Bearer access JWT and refresh JWT; the decoded non-sensitive claims include issuer `spending-dashboard-service`, audience `spending-dashboard-api`, subject `1`, `iat`, `exp`, and distinct `purpose` values of `access` and `refresh`.
+- the access token expires before the refresh token.
+- unknown email and wrong password both return `401` with the same generic `invalid_credentials` response.
+- sign-in stores only the SHA-256 digest of the current refresh token.
+- `POST /api/v1/auth/refresh` returns a new access token and does not rotate the saved refresh-token digest.
+- malformed, JWT-expired, saved-state-expired, replaced, and revoked refresh tokens are rejected.
+- `GET /api/v1/auth/caller` returns only the verified subject for a valid access token and does not create an HTTP session.
+- missing, malformed, expired, wrongly signed, wrong-issuer, wrong-audience, and refresh-purpose tokens are rejected for protected access.
+
+No full token, token signature, plaintext password, password hash, refresh-token digest, or private key is recorded here.
+
+## Current Source Organization
+
+```text
+com/fedstack/spending
+com/fedstack/spending/application
+com/fedstack/spending/auth/application
+com/fedstack/spending/auth/persistence
+com/fedstack/spending/auth/token
+com/fedstack/spending/auth/web
+com/fedstack/spending/console
+com/fedstack/spending/domain
+com/fedstack/spending/persistence
+com/fedstack/spending/security
+com/fedstack/spending/source
 ```
 
 ## Final JPQL Repository Method
