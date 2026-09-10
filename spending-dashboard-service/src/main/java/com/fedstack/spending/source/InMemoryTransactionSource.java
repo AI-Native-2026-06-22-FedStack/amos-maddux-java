@@ -2,6 +2,7 @@ package com.fedstack.spending.source;
 
 import com.fedstack.spending.domain.Transaction;
 import com.fedstack.spending.domain.TransactionType;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Repository
+@Profile("in-memory")
 public class InMemoryTransactionSource implements TransactionSource {
 	private static final Comparator<Transaction> MONTHLY_ORDER =
 			Comparator.comparing(Transaction::occurredOn, Comparator.reverseOrder())

@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Spending Dashboard</title>
+    <style>
+      :root {
+        --navy: #102c38;
+        --navy-deep: #0b222d;
+        --teal: #0d806f;
+        --teal-dark: #08695c;
+        --mint: #e7f4f0;
+        --ink: #17303b;
+        --muted: #6d7d85;
+        --line: #dfe6e8;
+        --surface: #ffffff;
+        --page: #f3f5f5;
+        --danger: #bd4c4c;
+        --income: #16745e;
+        --shadow: 0 12px 32px rgba(15, 43, 55, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        color: var(--ink);
+        background: var(--page);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      select {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      .transaction-row:focus-visible {
+        outline: 3px solid rgba(13, 128, 111, 0.28);
+        outline-offset: 2px;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* Sign in */
+      .login-screen {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+        background:
+          radial-gradient(
+            circle at 15% 10%,
+            rgba(13, 128, 111, 0.1),
+            transparent 28rem
+          ),
+          var(--page);
+      }
+      .login-shell {
+        width: min(960px, 100%);
+        min-height: 570px;
+        display: grid;
+        grid-template-columns: 1.02fr 0.98fr;
+        overflow: hidden;
+        background: var(--surface);
+        border: 1px solid #e2e8e9;
+        border-radius: 22px;
+        box-shadow: 0 24px 65px rgba(16, 44, 56, 0.14);
+      }
+      .login-hero {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 52px;
+        color: #fff;
+        background: linear-gradient(
+          145deg,
+          var(--navy-deep),
+          #104655 62%,
+          #0b7468
+        );
+        overflow: hidden;
+      }
+      .login-hero::before,
+      .login-hero::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .login-hero::before {
+        width: 360px;
+        height: 360px;
+        right: -170px;
+        top: -130px;
+      }
+      .login-hero::after {
+        width: 260px;
+        height: 260px;
+        left: -140px;
+        bottom: -120px;
+      }
+      .brand {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 760;
+        letter-spacing: -0.01em;
+      }
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #18a28e;
+        color: white;
+        font-weight: 850;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+        margin: auto 0;
+      }
+      .hero-kicker {
+        margin: 0 0 14px;
+        color: #78dacb;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .hero-copy h1 {
+        max-width: 390px;
+        margin: 0;
+        font-size: clamp(34px, 4.2vw, 52px);
+        line-height: 1.08;
+        letter-spacing: -0.045em;
+      }
+      .hero-copy p {
+        max-width: 390px;
+        margin: 20px 0 0;
+        color: #c6d8dd;
+        font-size: 16px;
+        line-height: 1.7;
+      }
+      .hero-foot {
+        position: relative;
+        z-index: 1;
+        color: #a8c3c9;
+        font-size: 12px;
+      }
+      .login-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 54px 58px;
+      }
+      .login-panel h2 {
+        margin: 0 0 8px;
+        color: var(--ink);
+        font-size: 30px;
+        letter-spacing: -0.03em;
+      }
+      .login-subtitle {
+        margin: 0 0 30px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .field {
+        margin-bottom: 18px;
+      }
+      .field label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 720;
+      }
+      .field input {
+        width: 100%;
+        height: 48px;
+        padding: 0 14px;
+        color: var(--ink);
+        background: #fbfcfc;
+        border: 1px solid #d8e1e3;
+        border-radius: 9px;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .field input:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(13, 128, 111, 0.1);
+      }
+      .primary-button {
+        width: 100%;
+        height: 48px;
+        border: 0;
+        border-radius: 9px;
+        color: #fff;
+        background: var(--teal);
+        font-weight: 760;
+        box-shadow: 0 8px 18px rgba(13, 128, 111, 0.2);
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .primary-button:hover {
+        background: var(--teal-dark);
+      }
+      .primary-button:active {
+        transform: translateY(1px);
+      }
+      .login-error {
+        min-height: 20px;
+        margin: -3px 0 10px;
+        color: var(--danger);
+        font-size: 13px;
+      }
+      .demo-box {
+        margin-top: 24px;
+        padding: 15px 16px;
+        border: 1px solid #d7e9e4;
+        border-radius: 10px;
+        color: #46636b;
+        background: #f2f9f7;
+        font-size: 12px;
+        line-height: 1.65;
+      }
+      .demo-box strong {
+        color: var(--teal-dark);
+      }
+      .demo-value {
+        color: var(--ink);
+        font-weight: 650;
+      }
+
+      /* Dashboard */
+      .dashboard-screen {
+        min-height: 100vh;
+        padding-bottom: 48px;
+      }
+      .dashboard-hero {
+        color: #fff;
+        background: linear-gradient(
+          120deg,
+          var(--navy-deep),
+          #123d49 63%,
+          #0a6f65
+        );
+      }
+      .hero-inner {
+        width: min(1160px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 25px 0 96px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .dashboard-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 15px;
+        font-weight: 760;
+      }
+      .user-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: #c8dbdf;
+        font-size: 13px;
+      }
+      .signout-button {
+        padding: 9px 14px;
+        color: #eef8f6;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .signout-button:hover {
+        background: rgba(255, 255, 255, 0.13);
+      }
+      .welcome {
+        margin-top: 54px;
+      }
+      .welcome .eyebrow {
+        margin: 0 0 8px;
+        color: #72d7c7;
+        font-size: 11px;
+        font-weight: 820;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .welcome h1 {
+        margin: 0;
+        font-size: clamp(31px, 4vw, 44px);
+        letter-spacing: -0.04em;
+      }
+      .welcome p {
+        margin: 9px 0 0;
+        color: #b8cdd2;
+        font-size: 14px;
+      }
+      .dashboard-main {
+        width: min(1160px, calc(100% - 40px));
+        margin: -66px auto 0;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .summary-card {
+        min-height: 145px;
+        padding: 25px 26px;
+        background: var(--surface);
+        border: 1px solid #e0e7e8;
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+      }
+      .summary-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 730;
+        letter-spacing: 0.02em;
+      }
+      .summary-value {
+        margin: 14px 0 7px;
+        color: var(--ink);
+        font-size: 30px;
+        font-weight: 790;
+        letter-spacing: -0.035em;
+      }
+      .summary-note {
+        color: #87959b;
+        font-size: 11px;
+      }
+      .summary-card.spending .summary-value {
+        color: #b15050;
+      }
+      .summary-card.income .summary-value {
+        color: var(--income);
+      }
+      .insight-card {
+        display: grid;
+        grid-template-columns: minmax(210px, 0.7fr) minmax(300px, 1.3fr);
+        gap: 28px;
+        margin-top: 18px;
+        padding: 25px 26px;
+        background: var(--surface);
+        border: 1px solid #e0e7e8;
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(15, 43, 55, 0.055);
+      }
+      .section-kicker {
+        margin: 0 0 7px;
+        color: var(--teal);
+        font-size: 11px;
+        font-weight: 820;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .insight-card h2,
+      .transactions-card h2 {
+        margin: 0;
+        font-size: 20px;
+        letter-spacing: -0.025em;
+      }
+      .insight-card .description {
+        margin: 8px 0 17px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .insight-button {
+        padding: 10px 16px;
+        color: white;
+        background: var(--teal);
+        border: 0;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+      .insight-button:hover {
+        background: var(--teal-dark);
+      }
+      .insight-output {
+        min-height: 108px;
+        display: flex;
+        align-items: center;
+        padding: 20px 22px;
+        color: #466068;
+        background: #f6f9f8;
+        border: 1px dashed #cddbd8;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+      .insight-output.generated {
+        align-items: flex-start;
+        color: var(--ink);
+        background: var(--mint);
+        border-style: solid;
+        border-color: #cce3dc;
+      }
+      .transactions-card {
+        margin-top: 18px;
+        padding: 26px;
+        background: var(--surface);
+        border: 1px solid #e0e7e8;
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(15, 43, 55, 0.055);
+      }
+      .transactions-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .count {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .filters {
+        display: grid;
+        grid-template-columns: 1fr 210px;
+        gap: 12px;
+        margin-bottom: 19px;
+      }
+      .search-wrap {
+        position: relative;
+      }
+      .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #829198;
+        font-size: 17px;
+        pointer-events: none;
+      }
+      .filters input,
+      .filters select {
+        width: 100%;
+        height: 44px;
+        color: var(--ink);
+        background: #fafbfb;
+        border: 1px solid #dce3e5;
+        border-radius: 8px;
+      }
+      .filters input {
+        padding: 0 14px 0 41px;
+      }
+      .filters select {
+        padding: 0 36px 0 13px;
+      }
+      .transactions-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(270px, 0.75fr);
+        gap: 22px;
+        align-items: start;
+      }
+      .transaction-list {
+        display: grid;
+        gap: 9px;
+      }
+      .transaction-row {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 120px;
+        gap: 13px;
+        align-items: center;
+        padding: 14px;
+        text-align: left;
+        color: inherit;
+        background: #fff;
+        border: 1px solid #e2e8e9;
+        border-radius: 10px;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          transform 0.15s;
+      }
+      .transaction-row:hover {
+        transform: translateY(-1px);
+        border-color: #b9d6d0;
+        background: #fbfdfc;
+      }
+      .transaction-row.selected {
+        border-color: var(--teal);
+        background: #f2faf7;
+        box-shadow: 0 0 0 2px rgba(13, 128, 111, 0.08);
+      }
+      .transaction-icon {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        color: #526b73;
+        background: #edf2f2;
+        font-size: 12px;
+        font-weight: 830;
+      }
+      .transaction-row.income .transaction-icon {
+        color: var(--income);
+        background: #e8f5f1;
+      }
+      .transaction-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 750;
+      }
+      .transaction-meta {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .transaction-amount {
+        text-align: right;
+        font-size: 13px;
+        font-weight: 790;
+      }
+      .transaction-row.income .transaction-amount {
+        color: var(--income);
+      }
+      .transaction-row.spending .transaction-amount {
+        color: #a34d4d;
+      }
+      .details-panel {
+        min-height: 274px;
+        padding: 22px;
+        background: #f8faf9;
+        border: 1px solid #e0e7e7;
+        border-radius: 11px;
+      }
+      .details-panel h3 {
+        margin: 0 0 5px;
+        font-size: 16px;
+      }
+      .details-placeholder {
+        min-height: 225px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+      .details-placeholder span {
+        display: block;
+        max-width: 190px;
+      }
+      .detail-merchant {
+        margin: 17px 0 5px;
+        font-size: 20px;
+        font-weight: 780;
+        letter-spacing: -0.025em;
+      }
+      .detail-amount {
+        margin-bottom: 19px;
+        color: #a34d4d;
+        font-size: 25px;
+        font-weight: 820;
+      }
+      .detail-amount.income {
+        color: var(--income);
+      }
+      .detail-grid {
+        display: grid;
+        gap: 0;
+      }
+      .detail-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px 0;
+        border-top: 1px solid #e2e7e7;
+        font-size: 12px;
+      }
+      .detail-line span:first-child {
+        color: var(--muted);
+      }
+      .detail-line span:last-child {
+        text-align: right;
+        font-weight: 680;
+      }
+      .empty-state {
+        padding: 46px 20px;
+        text-align: center;
+        color: var(--muted);
+        border: 1px dashed #d6dfe0;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+
+      @media (max-width: 860px) {
+        .login-shell {
+          grid-template-columns: 1fr;
+          max-width: 560px;
+        }
+        .login-hero {
+          min-height: 260px;
+          padding: 34px;
+        }
+        .hero-copy {
+          margin: 44px 0 28px;
+        }
+        .hero-copy h1 {
+          font-size: 36px;
+        }
+        .hero-foot {
+          display: none;
+        }
+        .login-panel {
+          padding: 42px 34px;
+        }
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+        .summary-card {
+          min-height: 120px;
+        }
+        .insight-card {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+        .transactions-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 600px) {
+        .login-screen {
+          padding: 0;
+        }
+        .login-shell {
+          min-height: 100vh;
+          border: 0;
+          border-radius: 0;
+        }
+        .login-hero {
+          min-height: 225px;
+          padding: 28px 24px;
+        }
+        .hero-copy {
+          margin: 32px 0 15px;
+        }
+        .hero-copy h1 {
+          font-size: 31px;
+        }
+        .hero-copy p {
+          margin-top: 13px;
+          font-size: 14px;
+        }
+        .login-panel {
+          padding: 36px 24px;
+        }
+        .hero-inner,
+        .dashboard-main {
+          width: min(100% - 24px, 1160px);
+        }
+        .hero-inner {
+          padding-top: 17px;
+        }
+        .user-name {
+          display: none;
+        }
+        .welcome {
+          margin-top: 44px;
+        }
+        .filters {
+          grid-template-columns: 1fr;
+        }
+        .transactions-card,
+        .insight-card,
+        .summary-card {
+          padding: 20px;
+        }
+        .transaction-row {
+          grid-template-columns: 40px minmax(0, 1fr) 92px;
+          padding: 11px;
+          gap: 10px;
+        }
+        .transaction-icon {
+          width: 36px;
+          height: 36px;
+        }
+        .transaction-meta {
+          font-size: 10px;
+        }
+        .transaction-amount {
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="login-screen" id="loginScreen" aria-labelledby="loginTitle">
+      <div class="login-shell">
+        <div class="login-hero">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">$</span
+            ><span>Fedstack</span>
+          </div>
+          <div class="hero-copy">
+            <p class="hero-kicker">Personal finance</p>
+            <h1>Know where your money goes.</h1>
+            <p>
+              A clear monthly view of your balance, income, spending, and recent
+              transactions.
+            </p>
+          </div>
+          <div class="hero-foot">Week 4 · Personal Spending Dashboard</div>
+        </div>
+
+        <div class="login-panel">
+          <h2 id="loginTitle">Welcome back</h2>
+          <p class="login-subtitle">
+            Sign in to view your personal spending dashboard.
+          </p>
+          <form id="loginForm" novalidate>
+            <div class="field">
+              <label for="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="username"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            <div
+              class="login-error"
+              id="loginError"
+              role="alert"
+              aria-live="polite"
+            ></div>
+            <button class="primary-button" type="submit">Sign in</button>
+          </form>
+          <div class="demo-box">
+            <strong>Static prototype access</strong><br />
+            Email: <span class="demo-value">demo@fedstack.dev</span><br />
+            Password: <span class="demo-value">any non-empty value</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="dashboard-screen hidden"
+      id="dashboardScreen"
+      aria-labelledby="dashboardTitle"
+    >
+      <header class="dashboard-hero">
+        <div class="hero-inner">
+          <div class="topbar">
+            <div class="dashboard-brand">
+              <span class="brand-mark" aria-hidden="true">$</span
+              ><span>Personal Spending</span>
+            </div>
+            <div class="user-actions">
+              <span class="user-name">Demo User</span
+              ><button class="signout-button" id="signOutButton" type="button">
+                Sign out
+              </button>
+            </div>
+          </div>
+          <div class="welcome">
+            <p class="eyebrow">Monthly overview</p>
+            <h1 id="dashboardTitle" tabindex="-1">Your spending dashboard</h1>
+            <p>Here is your financial activity for August 2026.</p>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard-main">
+        <section class="summary-grid" aria-label="Account summary">
+          <article class="summary-card">
+            <div class="summary-label">Current Balance</div>
+            <div class="summary-value">$4,280.65</div>
+            <div class="summary-note">Available across your account</div>
+          </article>
+          <article class="summary-card income">
+            <div class="summary-label">Monthly Income</div>
+            <div class="summary-value">$5,240.00</div>
+            <div class="summary-note">2 income transactions this month</div>
+          </article>
+          <article class="summary-card spending">
+            <div class="summary-label">Monthly Spending</div>
+            <div class="summary-value">$1,684.27</div>
+            <div class="summary-note">6 spending transactions this month</div>
+          </article>
+        </section>
+
+        <section class="insight-card" aria-labelledby="insightTitle">
+          <div>
+            <p class="section-kicker">Smart summary</p>
+            <h2 id="insightTitle">Spending Insight</h2>
+            <p class="description">
+              Generate a short summary from this month’s spending.
+            </p>
+            <button class="insight-button" id="insightButton" type="button">
+              Generate Insight
+            </button>
+          </div>
+          <div class="insight-output" id="insightOutput" aria-live="polite">
+            Your generated spending insight will appear here.
+          </div>
+        </section>
+
+        <section class="transactions-card" aria-labelledby="transactionsTitle">
+          <div class="transactions-heading">
+            <div>
+              <p class="section-kicker">August 2026</p>
+              <h2 id="transactionsTitle">Recent Transactions</h2>
+            </div>
+            <div class="count" id="transactionCount">
+              Showing 8 of 8 transactions
+            </div>
+          </div>
+          <div class="filters">
+            <div class="search-wrap">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <label class="hidden" for="searchInput"
+                >Search transactions</label
+              >
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search transactions"
+              />
+            </div>
+            <div>
+              <label class="hidden" for="categorySelect"
+                >Filter by category</label
+              >
+              <select id="categorySelect">
+                <option value="all">All categories</option>
+                <option value="Income">Income</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Transport">Transport</option>
+                <option value="Housing">Housing</option>
+                <option value="Bills">Bills</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Health">Health</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="transactions-layout">
+            <div
+              class="transaction-list"
+              id="transactionList"
+              aria-label="Transactions"
+            ></div>
+            <aside
+              class="details-panel"
+              id="detailsPanel"
+              aria-live="polite"
+              aria-labelledby="detailsTitle"
+            >
+              <h3 id="detailsTitle">Transaction Details</h3>
+              <div class="details-placeholder">
+                <span>Select a transaction to view its details.</span>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <script>
+      const transactions = [
+        {
+          id: 1,
+          name: "Northstar Payroll",
+          date: "2026-08-12",
+          category: "Income",
+          amount: 2620.0,
+          type: "income",
+          method: "Direct deposit",
+        },
+        {
+          id: 2,
+          name: "Green Basket Market",
+          date: "2026-08-11",
+          category: "Groceries",
+          amount: 86.42,
+          type: "spending",
+          method: "Debit card",
+        },
+        {
+          id: 3,
+          name: "Metro Transit",
+          date: "2026-08-11",
+          category: "Transport",
+          amount: 89.3,
+          type: "spending",
+          method: "Digital wallet",
+        },
+        {
+          id: 4,
+          name: "Cedar Heights Rent",
+          date: "2026-08-08",
+          category: "Housing",
+          amount: 1250.0,
+          type: "spending",
+          method: "Bank transfer",
+        },
+        {
+          id: 5,
+          name: "City Utilities",
+          date: "2026-08-06",
+          category: "Bills",
+          amount: 143.6,
+          type: "spending",
+          method: "Autopay",
+        },
+        {
+          id: 6,
+          name: "Streamline",
+          date: "2026-08-04",
+          category: "Entertainment",
+          amount: 15.99,
+          type: "spending",
+          method: "Credit card",
+        },
+        {
+          id: 7,
+          name: "Corner Pharmacy",
+          date: "2026-08-02",
+          category: "Health",
+          amount: 98.96,
+          type: "spending",
+          method: "Debit card",
+        },
+        {
+          id: 8,
+          name: "Northstar Payroll",
+          date: "2026-08-01",
+          category: "Income",
+          amount: 2620.0,
+          type: "income",
+          method: "Direct deposit",
+        },
+      ];
+
+      const loginScreen = document.getElementById("loginScreen");
+      const dashboardScreen = document.getElementById("dashboardScreen");
+      const loginForm = document.getElementById("loginForm");
+      const loginError = document.getElementById("loginError");
+      const searchInput = document.getElementById("searchInput");
+      const categorySelect = document.getElementById("categorySelect");
+      const transactionList = document.getElementById("transactionList");
+      const transactionCount = document.getElementById("transactionCount");
+      const detailsPanel = document.getElementById("detailsPanel");
+      const insightButton = document.getElementById("insightButton");
+      const insightOutput = document.getElementById("insightOutput");
+      let selectedId = null;
+      let insightTimer = null;
+
+      const money = (value) =>
+        new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(value);
+      const readableDate = (value) =>
+        new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          timeZone: "UTC",
+        }).format(new Date(value + "T00:00:00Z"));
+      const initials = (name) =>
+        name
+          .split(" ")
+          .map((word) => word[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+
+      function renderTransactions() {
+        const term = searchInput.value.trim().toLowerCase();
+        const category = categorySelect.value;
+        const visible = transactions.filter((transaction) => {
+          const matchesSearch =
+            transaction.name.toLowerCase().includes(term) ||
+            transaction.category.toLowerCase().includes(term);
+          const matchesCategory =
+            category === "all" || transaction.category === category;
+          return matchesSearch && matchesCategory;
+        });
+
+        if (
+          selectedId &&
+          !visible.some((transaction) => transaction.id === selectedId)
+        ) {
+          selectedId = null;
+          renderDetails(null);
+        }
+
+        transactionCount.textContent = `Showing ${visible.length} of ${transactions.length} transactions`;
+        if (!visible.length) {
+          transactionList.innerHTML =
+            '<div class="empty-state">No transactions match your search and category.</div>';
+          return;
+        }
+
+        transactionList.innerHTML = visible
+          .map(
+            (transaction) => `
+        <button class="transaction-row ${transaction.type} ${selectedId === transaction.id ? "selected" : ""}"
+          type="button" data-id="${transaction.id}" aria-pressed="${selectedId === transaction.id}">
+          <span class="transaction-icon" aria-hidden="true">${initials(transaction.name)}</span>
+          <span>
+            <span class="transaction-name">${transaction.name}</span>
+            <span class="transaction-meta">${transaction.category} · ${readableDate(transaction.date)}</span>
+          </span>
+          <span class="transaction-amount">${transaction.type === "income" ? "+" : "−"}${money(transaction.amount)}</span>
+        </button>
+      `,
+          )
+          .join("");
+
+        transactionList.querySelectorAll(".transaction-row").forEach((row) => {
+          row.addEventListener("click", () => {
+            selectedId = Number(row.dataset.id);
+            renderDetails(
+              transactions.find((transaction) => transaction.id === selectedId),
+            );
+            renderTransactions();
+          });
+        });
+      }
+
+      function renderDetails(transaction) {
+        if (!transaction) {
+          detailsPanel.innerHTML =
+            '<h3 id="detailsTitle">Transaction Details</h3><div class="details-placeholder"><span>Select a transaction to view its details.</span></div>';
+          return;
+        }
+        detailsPanel.innerHTML = `
+        <h3 id="detailsTitle">Transaction Details</h3>
+        <div class="detail-merchant">${transaction.name}</div>
+        <div class="detail-amount ${transaction.type}">${transaction.type === "income" ? "+" : "−"}${money(transaction.amount)}</div>
+        <div class="detail-grid">
+          <div class="detail-line"><span>Category</span><span>${transaction.category}</span></div>
+          <div class="detail-line"><span>Date</span><span>${transaction.date}</span></div>
+          <div class="detail-line"><span>Payment method</span><span>${transaction.method}</span></div>
+          <div class="detail-line"><span>Type</span><span>${transaction.type === "income" ? "Income" : "Spending"}</span></div>
+        </div>`;
+      }
+
+      loginForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        if (email === "demo@fedstack.dev" && password.trim() !== "") {
+          loginError.textContent = "";
+          loginScreen.classList.add("hidden");
+          dashboardScreen.classList.remove("hidden");
+          document.title = "Dashboard · Personal Spending";
+          renderTransactions();
+          document.getElementById("dashboardTitle").focus?.();
+          window.scrollTo(0, 0);
+        } else {
+          loginError.textContent =
+            "Use the prototype email and any non-empty password.";
+        }
+      });
+
+      document.getElementById("signOutButton").addEventListener("click", () => {
+        clearInterval(insightTimer);
+        selectedId = null;
+        searchInput.value = "";
+        categorySelect.value = "all";
+        renderDetails(null);
+        insightOutput.textContent =
+          "Your generated spending insight will appear here.";
+        insightOutput.classList.remove("generated");
+        insightButton.disabled = false;
+        insightButton.textContent = "Generate Insight";
+        dashboardScreen.classList.add("hidden");
+        loginScreen.classList.remove("hidden");
+        loginForm.reset();
+        document.title = "Personal Spending Dashboard";
+        document.getElementById("email").focus();
+        window.scrollTo(0, 0);
+      });
+
+      searchInput.addEventListener("input", renderTransactions);
+      categorySelect.addEventListener("change", renderTransactions);
+
+      insightButton.addEventListener("click", () => {
+        clearInterval(insightTimer);
+        const message =
+          "Housing is your largest spending category this month. You spent $1,250.00 on housing, which is about 74% of your total monthly spending. Transport and groceries were your next largest everyday categories.";
+        let index = 0;
+        insightOutput.textContent = "";
+        insightOutput.classList.add("generated");
+        insightButton.disabled = true;
+        insightButton.textContent = "Generating…";
+        insightTimer = setInterval(() => {
+          insightOutput.textContent += message[index++] || "";
+          if (index >= message.length) {
+            clearInterval(insightTimer);
+            insightButton.disabled = false;
+            insightButton.textContent = "Generate Again";
+          }
+        }, 12);
+      });
+
+      renderTransactions();
+    </script>
+  </body>
+</html>
