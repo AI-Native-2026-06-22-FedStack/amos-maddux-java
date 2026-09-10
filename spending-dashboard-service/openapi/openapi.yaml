@@ -1,0 +1,379 @@
+openapi: 3.2.0
+info:
+  title: Spending Dashboard Transaction API
+  version: 1.0.0
+  description: >
+    Versioned HTTP contract for the authenticated user's monthly spending
+    dashboard, transaction creation, and a placeholder insight stream. Every
+    operation is scoped to the caller identified by the Lesson 6 access
+    token's `sub` claim.
+  license:
+    name: UNLICENSED
+    identifier: UNLICENSED
+servers:
+  - url: /api/v1
+    description: Current API version.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /dashboard:
+    get:
+      operationId: getMonthlyDashboard
+      summary: Get the authenticated user's monthly dashboard
+      description: >
+        Returns the authenticated user's income, spending, net change, and
+        ordered transaction rows for the requested month. Identity is taken
+        only from the verified access token subject.
+      tags: [Dashboard]
+      parameters:
+        - name: month
+          in: query
+          required: true
+          description: Requested month in `YYYY-MM` format.
+          schema:
+            type: string
+            pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+          example: '2026-01'
+      responses:
+        '200':
+          description: The requested month's dashboard.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyDashboard'
+              example:
+                month: '2026-01'
+                income: '2400.00'
+                spending: '186.20'
+                netChange: '2213.80'
+                transactions:
+                  - id: 4
+                    occurredOn: '2026-01-31'
+                    type: INCOME
+                    amount: '2400.00'
+                    description: Monthly salary
+                  - id: 5
+                    occurredOn: '2026-01-20'
+                    type: EXPENSE
+                    amount: '96.40'
+                    description: Electricity bill
+        '400':
+          $ref: '#/components/responses/MalformedRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - bearerAuth: []
+
+  /transactions:
+    post:
+      operationId: createTransaction
+      summary: Record a transaction for the authenticated user
+      description: >
+        Validates and persists one transaction for the account owner
+        identified by the verified access token subject. The caller cannot
+        supply a user identifier that changes this scope.
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+            example:
+              accountId: 1
+              merchantId: 3
+              categoryId: 2
+              amount: '42.15'
+              direction: DEBIT
+              occurredOn: '2026-01-18'
+              description: Weekly groceries
+      responses:
+        '201':
+          description: The transaction was created.
+          headers:
+            Location:
+              description: URL of the newly created transaction.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTransactionResponse'
+              example:
+                id: 10
+                accountId: 1
+                merchantId: 3
+                categoryId: 2
+                amount: '42.15'
+                direction: DEBIT
+                occurredOn: '2026-01-18'
+                description: Weekly groceries
+                createdAt: '2026-01-18T14:32:05Z'
+        '400':
+          $ref: '#/components/responses/ValidationFailure'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      security:
+        - bearerAuth: []
+
+  /insights/stream:
+    post:
+      operationId: streamInsights
+      summary: Stream a placeholder spending insight
+      description: >
+        Contract placeholder for a future AI-generated insight stream.
+        Emits deterministic, hard-coded text as multiple server-sent event
+        chunks. Makes no LLM call and stores no generated insight.
+      tags: [Insights]
+      responses:
+        '200':
+          description: A deterministic server-sent event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |
+                event: insight
+                data: Reviewing this month's spending...
+
+                event: insight
+                data: This is placeholder insight text. No model was called.
+
+                event: done
+                data: complete
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Lesson 6 access token. Identity is derived only from its verified subject claim.
+
+  schemas:
+    Money:
+      type: string
+      description: >
+        A non-negative decimal amount with exactly two fraction digits,
+        safe for exact `BigDecimal` round-tripping. Represented as a string
+        to avoid floating-point precision loss.
+      pattern: '^\d+\.\d{2}$'
+      example: '42.15'
+
+    TransactionType:
+      type: string
+      enum: [INCOME, EXPENSE]
+
+    TransactionDirection:
+      type: string
+      description: Ledger direction as stored; CREDIT maps to INCOME, DEBIT maps to EXPENSE.
+      enum: [CREDIT, DEBIT]
+
+    DashboardTransaction:
+      type: object
+      description: One ordered transaction row on the monthly dashboard.
+      properties:
+        id:
+          type: integer
+          format: int64
+        occurredOn:
+          type: string
+          format: date
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        amount:
+          $ref: '#/components/schemas/Money'
+        description:
+          type: string
+      required: [id, occurredOn, type, amount, description]
+
+    MonthlyDashboard:
+      type: object
+      properties:
+        month:
+          type: string
+          pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+        income:
+          $ref: '#/components/schemas/Money'
+        spending:
+          $ref: '#/components/schemas/Money'
+        netChange:
+          type: string
+          description: >
+            Signed decimal amount with exactly two fraction digits;
+            income minus spending. May be negative.
+          pattern: '^-?\d+\.\d{2}$'
+          example: '2213.80'
+        transactions:
+          type: array
+          description: >
+            Newest occurrence first; descending transaction id breaks
+            equal-occurrence ties. Order is not re-sorted by the API.
+          items:
+            $ref: '#/components/schemas/DashboardTransaction'
+      required: [month, income, spending, netChange, transactions]
+
+    CreateTransactionRequest:
+      type: object
+      properties:
+        accountId:
+          type: integer
+          format: int64
+          description: Must be an account owned by the authenticated user.
+        merchantId:
+          type: integer
+          format: int64
+        categoryId:
+          type: integer
+          format: int64
+        amount:
+          $ref: '#/components/schemas/Money'
+        direction:
+          $ref: '#/components/schemas/TransactionDirection'
+        occurredOn:
+          type: string
+          format: date
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required: [accountId, merchantId, categoryId, amount, direction, occurredOn, description]
+
+    CreateTransactionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        accountId:
+          type: integer
+          format: int64
+        merchantId:
+          type: integer
+          format: int64
+        categoryId:
+          type: integer
+          format: int64
+        amount:
+          $ref: '#/components/schemas/Money'
+        direction:
+          $ref: '#/components/schemas/TransactionDirection'
+        occurredOn:
+          type: string
+          format: date
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, accountId, merchantId, categoryId, amount, direction, occurredOn, description, createdAt]
+
+    ProblemDetail:
+      type: object
+      description: RFC 9457 Problem Details for HTTP APIs.
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+      required: [title, status]
+
+  responses:
+    MalformedRequest:
+      description: The request could not be parsed or the query parameters are malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Malformed Request
+            status: 400
+            detail: "month must match pattern YYYY-MM"
+            instance: /api/v1/dashboard
+
+    ValidationFailure:
+      description: The request body failed validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Validation Failed
+            status: 400
+            detail: "amount must be a positive decimal with two fraction digits"
+            instance: /api/v1/transactions
+
+    Unauthorized:
+      description: The access token is missing, malformed, expired, or otherwise fails verification.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Unauthorized
+            status: 401
+            detail: Full authentication is required to access this resource.
+            instance: /api/v1/dashboard
+
+    Forbidden:
+      description: The verified caller is not permitted to act on the referenced resource.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: "accountId 7 is not owned by the authenticated user"
+            instance: /api/v1/transactions
+
+    NotFound:
+      description: A referenced resource (account, merchant, or category) does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: "merchantId 999 does not exist"
+            instance: /api/v1/transactions
+
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Conflict
+            status: 409
+            detail: "an identical transaction already exists for this account and date"
+            instance: /api/v1/transactions

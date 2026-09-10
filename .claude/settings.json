@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /tmp/claude-1000/-home-amosmaddux-fedstack-amos-maddux-java/31568f65-c71e-4e98-a4b9-b1eef054bbdd/scratchpad/jdk21)",
+      "Bash(curl -fsSL -o jdk21.tar.gz \"https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse\" --max-time 60)",
+      "Bash(tar xzf *)"
+    ]
+  }
+}
