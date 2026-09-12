@@ -1,8 +1,8 @@
 package com.fedstack.spending.web;
 
 import com.fedstack.spending.application.CreateTransactionCommand;
+import com.fedstack.spending.application.CreatedTransaction;
 import com.fedstack.spending.application.TransactionCreationService;
-import com.fedstack.spending.persistence.TransactionEntity;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,22 +45,22 @@ public class TransactionController {
 				request.description()
 		);
 
-		TransactionEntity created = transactionCreationService.createTransaction(userId, command);
+		CreatedTransaction created = transactionCreationService.createTransaction(userId, command);
 
 		URI location = uriBuilder.replacePath("/api/v1/transactions/{id}")
-				.buildAndExpand(created.getId())
+				.buildAndExpand(created.id())
 				.toUri();
 
 		CreateTransactionResponse body = new CreateTransactionResponse(
-				created.getId(),
-				created.getAccount().getId(),
-				created.getMerchant().getId(),
-				created.getCategory().getId(),
-				created.getAmount().toPlainString(),
-				created.getDirection(),
-				created.getOccurredOn(),
-				created.getDescription(),
-				created.getCreatedAt()
+				created.id(),
+				created.accountId(),
+				created.merchantId(),
+				created.categoryId(),
+				created.amount().toPlainString(),
+				created.direction(),
+				created.occurredOn(),
+				created.description(),
+				created.createdAt()
 		);
 
 		return ResponseEntity.created(location).body(body);

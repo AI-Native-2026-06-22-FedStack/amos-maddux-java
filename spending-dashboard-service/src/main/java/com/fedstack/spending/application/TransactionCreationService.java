@@ -41,7 +41,7 @@ public class TransactionCreationService {
 	}
 
 	@Transactional
-	public TransactionEntity createTransaction(long userId, CreateTransactionCommand command) {
+	public CreatedTransaction createTransaction(long userId, CreateTransactionCommand command) {
 		if (userId <= 0) {
 			throw new IllegalArgumentException("user id must be positive");
 		}
@@ -90,6 +90,17 @@ public class TransactionCreationService {
 				command.description(),
 				OffsetDateTime.now(clock)
 		);
-		return transactionRepository.save(transaction);
+		TransactionEntity saved = transactionRepository.save(transaction);
+		return new CreatedTransaction(
+				saved.getId(),
+				account.getId(),
+				merchant.getId(),
+				category.getId(),
+				saved.getAmount(),
+				saved.getDirection(),
+				saved.getOccurredOn(),
+				saved.getDescription(),
+				saved.getCreatedAt()
+		);
 	}
 }
