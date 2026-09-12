@@ -5,7 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,8 +16,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.net.URI;
 import java.time.Clock;
-import java.util.Map;
 
 @Configuration
 public class SecurityConfiguration {
@@ -31,9 +33,16 @@ public class SecurityConfiguration {
 				)
 				.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
 				.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint((request, response, exception) -> {
+					ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+							HttpStatus.UNAUTHORIZED,
+							"Full authentication is required to access this resource."
+					);
+					problem.setTitle("Unauthorized");
+					problem.setType(URI.create("about:blank"));
+					problem.setInstance(URI.create(request.getRequestURI()));
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-					objectMapper.writeValue(response.getOutputStream(), Map.of("error", "unauthorized"));
+					response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+					objectMapper.writeValue(response.getOutputStream(), problem);
 				}));
 		return http.build();
 	}
